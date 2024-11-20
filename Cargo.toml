@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "srv", "web",
+    "entity", "migration"
+]
+resolver = "2"
