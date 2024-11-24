@@ -1,0 +1,66 @@
+@startuml
+hide circle
+skinparam linetype ortho
+
+entity "**ac**" {
+  + ""id"": //bigserial [PK]//
+  --
+  *""pwd"": //text //
+  *""name"": //character varying //
+}
+
+entity "**msg**" {
+  + ""ack"": //bigserial [PK]//
+  --
+  *""id"": //bigint [FK]//
+  *""body"": //json //
+  *""happened_at"": //timestamp with time zone //
+}
+
+entity "**order**" {
+  + ""seq"": //bigint [PK][FK]//
+  --
+  *""code"": //character varying [FK]//
+  *""dir"": //dir //
+  *""price"": //numeric(1000,2) //
+  *""quantity"": //bigint //
+}
+
+entity "**rec**" {
+  + ""ack"": //bigserial [PK]//
+  --
+  *""code"": //character varying [FK]//
+  *""buyer_id"": //bigint [FK]//
+  *""seller_id"": //bigint [FK]//
+  *""price"": //numeric(1000,2) //
+  *""created_at"": //timestamp with time zone //
+}
+
+entity "**req**" {
+  + ""seq"": //bigserial [PK]//
+  --
+  *""id"": //bigint [FK]//
+  *""body"": //json //
+  *""created_at"": //timestamp with time zone //
+}
+
+entity "**security**" {
+  + ""code"": //character varying [PK]//
+  --
+  *""name"": //character varying //
+}
+
+"**msg**"   }-up-  "**ac**"
+
+"**order**"   }--  "**security**"
+
+"**order**"  ||-||  "**req**"
+
+"**rec**"   }--  "**ac**"
+
+"**rec**"   }--  "**security**"
+
+"**rec**"   }--  "**ac**"
+
+"**req**"   }--  "**ac**"
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+[*] --> Suspense
+Suspense -> Prepare: 09:15
+Prepare -> Call_Auction: 09:20
+Call_Auction: Forbid to cancel order
+Prepare: Allow to cancel order
+Call_Auction -> Suspense: 09:25
+note on link 
+  open 
+end note
+Suspense -> Continues_Trade: 09:30
+Continues_Trade: Allow to cancel order
+Continues_Trade --> Call_Auction: 14:57
+Call_Auction --> Suspense: 15:00
+note on link 
+  closing
+end note
+@enduml

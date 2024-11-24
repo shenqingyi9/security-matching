@@ -1,0 +1,30 @@
+@startuml
+start
+fork
+  if (bid queue is empty) then (fail to trade)
+    stop
+  endif
+  :bid = priorist bid in bid queue;
+fork again
+  if (offer queue is empty) then (fail to trade)
+    stop
+  endif
+  :offer = priorist offer in offer queue;
+end merge
+if (bid.price < offer.price) then (fail to trade)
+  stop
+else
+  switch (compare quantities)
+  case ( bid's is more )
+    :remove the offer from queue;
+    :decrease bid's quantity;
+  case ( same )
+    :remove both the bid and the offer from queues;
+  case ( offer's is more )
+    :remove the bid from queue;
+    :decrease offer's quantity;
+  endswitch
+  :succeed trading;
+  stop
+endif
+@enduml

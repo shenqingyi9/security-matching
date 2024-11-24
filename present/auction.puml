@@ -1,0 +1,27 @@
+@startuml
+[*] -left-> Waiting
+Waiting --> Pushing
+Pushing: The waiting queue is locked.
+Pushing --> PreAuction: watcher := true
+PreAuction --> Matching: The wating queue is not empty.
+Matching: The book is locked.
+Matching --> PreAuction
+PreAuction --> Waiting: watcher := false
+Waiting -left-> Canceling
+PreAuction --> Canceling
+Canceling: Firstly, lock the waiting queue.
+Canceling: Secondly, lock the book.
+Canceling --> PreAuction
+Waiting -right-> Calc
+Calc --> Waiting
+
+PreAuction --> Viewing: Require quotations now.
+Waiting --> Viewing: Require quotations now.
+state fork_state <<fork>>
+Viewing --> fork_state: Another quotation requirement.
+fork_state --> Viewing: Many viewing concurrently.
+Viewing: Lock the book. It's read only now.
+state join_state <<join>>
+Viewing --> join_state: All viewing have finished.
+join_state --> PreAuction
+@enduml

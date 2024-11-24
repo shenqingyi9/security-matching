@@ -1,0 +1,99 @@
+\documentclass{beamer}
+\usepackage[UTF8]{ctex}
+\usetheme{default}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{listings}
+
+\title{Security Matching System Present}
+\author{Shen Guanzhi}
+\begin{document}
+\begin{frame}[plain]
+    \maketitle
+\end{frame}
+\begin{frame}{Terms}
+	\begin{itemize}
+		\item Buy 买（动词）
+		\item Sell 卖（动词）
+		\item \textbf{Bid} Order 买单
+		\item \textbf{Offer} Order 卖单
+		\item Cancel Order 撤单
+		\item Quantity 数量
+		\item Call Auction 集合竞价
+		\item Continuous Trade 连续竞价
+		\item Quotations 行情
+	\end{itemize}
+\end{frame}
+\begin{frame}{Question Analysis}
+	Market Period
+	\scalebox{0.6}{\input{market}}
+\end{frame}
+\begin{frame}{Question Analysis}
+	Once Matching
+	\scalebox{0.45}{\input{matches}}
+\end{frame}
+\begin{frame}{Question Analysis}
+	\begin{table}[]
+		\caption[]{Call Auction vs Continues Trade}
+		\begin{tabular}{@{}|c|cc|@{}}
+			\toprule
+			Similarity                                                                                       & \multicolumn{2}{c|}{Differences}                                       \\ \midrule
+			\multirow{4}{*}{\begin{tabular}[c]{@{}c@{}}Repetition of\\ Once Matching\\ Process\end{tabular}} & \multicolumn{1}{c|}{\multirow{2}{*}{Call Auction}}    & CPU-Intensive  \\ \cmidrule(l){3-3} 
+			& \multicolumn{1}{c|}{}                                 & Non-Preemptive \\ \cmidrule(l){2-3} 
+			& \multicolumn{1}{c|}{\multirow{2}{*}{Continues Trade}} & I/O-Intensive  \\ \cmidrule(l){3-3} 
+			& \multicolumn{1}{c|}{}                                 & Preemptive     \\ \bottomrule
+		\end{tabular}
+	\end{table}
+\end{frame}
+\begin{frame}{Program Design: Book}
+	The book of a security consist of a bid queue and a offer queue.
+	\begin{table}[]
+		\begin{tabular}{@{}lllll@{}}
+			\toprule
+			& Get Peak & Pop Peak & Insert   & Delete   \\ \midrule
+			Binary Heap   & $O(1)$     & $O(\log n)$ & $O(\log n)$ & $O(n)$     \\
+			Balanced Tree & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ \\ \bottomrule
+		\end{tabular}
+	\end{table}
+	It is not frequent to only get the peak value but not pop it. And delete value is also important.
+	By use a balanced tree, quotations gotten by user are ordered.
+\end{frame}
+\begin{frame}{Program Design: Deal Maker}
+	Each security has its own deal maker.
+	\begin{itemize}
+		\item Book
+		\item Waiting Queue: Bids and offers which has been recorded to database but has not join the book.
+		\item Watcher
+		\item Auction Task: A coroutine trying to pop orders from the Waiting Queue and trade them or push them into the book.
+	\end{itemize}
+\end{frame}
+\begin{frame}{Program Design: Deal Maker}
+	There are some different coroutines wanting to read and write a deal maker, which is the main challenge of the whole system.
+	\begin{itemize}
+		\item Accept Task: Push an order into the waiting queue, and then suspense the calculate task and wake up the auction task.
+		\item Auction Task: Pop orders from the waiting queue. While no waiting order, it should wake up the calculate task and suspend.
+		\item Cancel Task: Try to remove order from the waiting queue. (Binary search. $O(\log n)$) If failing, then remove order from the book.
+		\item Task which calculate opening or closing price: should wait for the waiting queue empty.
+		\item View Task: Get the quotations at the present time.
+	\end{itemize}
+\end{frame}
+\begin{frame}{Program Design: Deal Maker}
+	The synchronizing algorithm should be both correct and fair.
+	\begin{itemize}
+		\item Both the book and the waiting queue are protected with R/W lock.
+		\item The watcher is a special channel provided by the coroutine runtime.
+	\end{itemize}
+\end{frame}
+\begin{frame}{Program Design: Deal Maker}
+	\scalebox{0.4}{\input{auction}}
+\end{frame}
+\begin{frame}{Database Design}
+	\scalebox{0.35}{\input{security_matching}}
+	\begin{itemize}
+		\item While \lstinline|order| and \lstinline|msg| tables are used to backup data in memory, \lstinline|req| and \lstinline|res| tables are used to save user order requirement and trade record.
+		\item Transaction is utilized.
+	\end{itemize}
+\end{frame}
+\end{document}
